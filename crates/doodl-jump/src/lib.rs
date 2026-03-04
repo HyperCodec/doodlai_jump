@@ -1,3 +1,8 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use bevy::prelude::*;
+use rand::prelude::*;
+
 const NUM_PLATFORMS: u32 = 5;
 const GAME_WIDTH: f32 = 540.;
 const GAME_HEIGHT: f32 = 960.;
@@ -12,14 +17,6 @@ const PLAYER_HEIGHT: f32 = 1.0;
 
 const PLATFORM_WIDTH: f32 = 1.0;
 const PLATFORM_HEIGHT: f32 = 0.5;
-
-use std::{
-    ops::{Deref, DerefMut},
-    time::{SystemTime, UNIX_EPOCH},
-};
-
-use bevy::prelude::*;
-use rand::prelude::*;
 
 #[derive(Component, Debug, Default)]
 pub struct Player;
@@ -226,22 +223,8 @@ impl DoodlJumpSettings {
     }
 }
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Deref, DerefMut)]
 pub struct RngSource(pub StdRng);
-
-impl Deref for RngSource {
-    type Target = StdRng;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for RngSource {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
 
 #[derive(Default, Debug)]
 pub struct DoodlJumpPlugin {
