@@ -20,11 +20,8 @@ ctrlc = "3.5.2"
 log.workspace = true
 logger.workspace = true
 time.workspace = true
-rand = "0.8.5"
-maths.workspace =true
-serde_json.workspace = true
+ron.workspace = true
 rayon = "1.11.0"
 neat.workspace = true
-indicatif = "0.17.11"
-plotters = "0.3.7"
 genetic-rs.workspace = true
+# genetic-rs-extras = { version = "0.1.0", features = ["indicatif", "plotters"] } # need to fix this upstream
