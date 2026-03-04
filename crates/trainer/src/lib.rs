@@ -3,9 +3,11 @@ use bevy::prelude::*;
 use doodl_jump::{DeathEvent, DoodlJumpPlugin, DoodlJumpSettings, ScrollHeight};
 
 pub const NB_GAMES: usize = 3;
-pub const GAME_TIME_S: usize = 20; // Nb of secconds we let the ai play the game before registering their scrore
+pub const GAME_STEPS: usize = 50; // max amount of steps we let the ai play the game before registering their scrore
 pub const GAME_FPS: usize = 20; // 60
 pub const GAME_DELTA_TIME: f32 = 1. / GAME_FPS as f32;
+pub const FITNESS_LOSS_PER_TICK: f32 = 0.01; // to encourage the ai to finish the game faster
+pub const GRACE_PERIOD: usize = 10; // amount of steps we let the ai play without losing fitness to give it a chance to get going
 
 pub fn trainer_plugin(app: &mut App) {
     app
@@ -44,11 +46,21 @@ pub fn handle_death(
 
 pub fn eval_game_fitness(mut app: App) -> f32 {
     app.finish();
+    
+    let mut i = 0;
     loop {
         app.update();
 
-        if app.should_exit().is_some() {
-            return app.world().get_resource::<ScrollHeight>().unwrap().0;
+        if i == GAME_STEPS || app.should_exit().is_some() {
+            let height = app.world().get_resource::<ScrollHeight>().unwrap().0;
+            let time_penalty = if i > GRACE_PERIOD {
+                (GAME_STEPS - i) as f32 * FITNESS_LOSS_PER_TICK
+            } else {
+                0.0
+            };
+            return height - time_penalty;
         }
+
+        i += 1;
     }
 }
