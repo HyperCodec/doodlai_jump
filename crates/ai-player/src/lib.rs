@@ -2,15 +2,6 @@ use doodl_jump::{DoodlJumpSettings, Platform, Player, Velocity};
 use neat::NeuralNetwork;
 use bevy::prelude::*;
 
-pub const NB_GAMES: usize = 3;
-pub const GAME_TIME_S: usize = 20; // Nb of secconds we let the ai play the game before registering their scrore
-pub const GAME_FPS: usize = 20; // 60
-pub const GAME_DELTA_TIME: f32 = 1. / GAME_FPS as f32;
-pub const NB_GENERATIONS: usize = 1000;
-pub const NB_GENOME_PER_GEN: usize = 2_500;
-pub const MUTATION_RATE: f32 = 0.05;
-pub const MUTATION_PASSES: usize = 3;
-
 // 4 for player velxy + posxy, 1 for latest dt, 2 for each platform xy.
 pub const AGENT_IN: usize = 15;
 
@@ -22,7 +13,7 @@ pub type Brain = NeuralNetwork<AGENT_IN, AGENT_OUT>;
 #[derive(Resource, Debug, Deref, DerefMut)]
 pub struct AISource(pub Brain);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AIPlayerPlugin {
     pub brain: Brain,
 }

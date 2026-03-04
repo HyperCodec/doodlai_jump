@@ -15,6 +15,11 @@ extern crate log;
 
 mod utils;
 
+const NB_GENERATIONS: usize = 1000;
+const NB_GENOME_PER_GEN: usize = 2_500;
+const MUTATION_RATE: f32 = 0.05;
+const MUTATION_PASSES: usize = 3;
+
 fn fitness(brain: &Brain) -> f32 {
     (0..NB_GAMES).map(|_| play_game(&brain)).sum::<f32>() / NB_GAMES as f32
 }

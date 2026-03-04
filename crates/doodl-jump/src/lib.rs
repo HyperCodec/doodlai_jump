@@ -226,7 +226,7 @@ impl DoodlJumpSettings {
 #[derive(Resource, Debug, Deref, DerefMut)]
 pub struct RngSource(pub StdRng);
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct DoodlJumpPlugin {
     pub settings: DoodlJumpSettings,
     pub gravity: Gravity,
