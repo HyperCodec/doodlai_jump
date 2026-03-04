@@ -104,6 +104,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "ai-player"
+version = "0.1.0"
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2263,20 +2267,21 @@ dependencies = [
 name = "display"
 version = "0.1.0"
 dependencies = [
+ "ai-player",
  "derivative",
+ "doodl-jump",
  "enum_dispatch",
- "game",
  "log",
  "logger",
  "neat",
  "random",
- "ring",
  "ron",
  "serde",
  "spin_sleep",
  "strum",
  "strum_macros",
  "time",
+ "trainer",
 ]
 
 [[package]]
@@ -2301,6 +2306,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4b8a88685455ed29a21542a33abd9cb6510b6b129abadabdcef0f4c55bc8f61"
 dependencies = [
  "litrs",
+]
+
+[[package]]
+name = "doodl-jump"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "rand 0.10.0",
 ]
 
 [[package]]
@@ -2663,14 +2676,6 @@ dependencies = [
  "futures-task",
  "pin-project-lite",
  "slab",
-]
-
-[[package]]
-name = "game"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "rand 0.10.0",
 ]
 
 [[package]]
@@ -4489,22 +4494,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51743d3e274e2b18df81c4dc6caf8a5b8e15dbe799e0dca05c7617380094e884"
 
 [[package]]
-name = "ring"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "ctrlc",
- "game",
- "genetic-rs",
- "genetic-rs-extras",
- "log",
- "logger",
- "neat",
- "ron",
- "time",
-]
-
-[[package]]
 name = "rodio"
 version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5157,6 +5146,23 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "trainer"
+version = "0.1.0"
+dependencies = [
+ "ai-player",
+ "bevy",
+ "ctrlc",
+ "doodl-jump",
+ "genetic-rs",
+ "genetic-rs-extras",
+ "log",
+ "logger",
+ "neat",
+ "ron",
+ "time",
 ]
 
 [[package]]

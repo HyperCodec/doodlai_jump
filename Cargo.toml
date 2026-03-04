@@ -1,9 +1,10 @@
 [workspace]
 resolver = "1"
 members = [
-    "game",
-    "ring",
-    "display"
+    "crates/doodl-jump",
+    "crates/trainer",
+    "crates/display",
+    "crates/ai-player"
 ]
 
 [profile.dev.package."*"]
@@ -19,3 +20,6 @@ neat = { version = "1.0.2",  features = ["serde"] }
 genetic-rs = { version = "1.3.0", features = ["derive"] }
 bevy = { version = "0.18.0", default-features = false, features = ["multi_threaded", "keyboard"] }
 ron = "0.12.0"
+doodl-jump = { path = "crates/doodl-jump" }
+ai-player = { path = "crates/ai-player" }
+trainer = { path = "crates/trainer" }

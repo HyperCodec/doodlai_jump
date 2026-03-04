@@ -10,8 +10,9 @@ name = "display"
 path = "src/main.rs"
 
 [dependencies]
-game = { path = "../game" }
-ring = { path = "../ring" }
+doodl-jump.workspace = true
+ai-player.workspace = true
+trainer = { path = "../trainer" }
 enum_dispatch = "0.3.13"
 derivative = "2.2.0"
 
