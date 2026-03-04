@@ -1,8 +1,6 @@
 use crate::assets::{self, file::Path};
 
-const USER_CONFIG_FILE: Path = Path::new(
-    "config/globalConfig.ron",
-);
+const USER_CONFIG_FILE: Path = Path::new("config/globalConfig.ron");
 
 #[derive(derivative::Derivative, serde::Deserialize, Debug, Clone)]
 #[serde(default)]

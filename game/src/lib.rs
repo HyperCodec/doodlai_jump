@@ -13,7 +13,10 @@ const PLAYER_HEIGHT: f32 = 1.0;
 const PLATFORM_WIDTH: f32 = 1.0;
 const PLATFORM_HEIGHT: f32 = 0.5;
 
-use std::{ops::{Deref, DerefMut}, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    ops::{Deref, DerefMut},
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use bevy::prelude::*;
 use rand::prelude::*;
@@ -114,7 +117,10 @@ impl Default for PlayerBundle {
             marker: Player::default(),
             velocity: Velocity::default(),
             transform: Transform::default(),
-            collider: RectCollider(Vec2 { x: PLAYER_WIDTH, y: PLAYER_HEIGHT }),
+            collider: RectCollider(Vec2 {
+                x: PLAYER_WIDTH,
+                y: PLAYER_HEIGHT,
+            }),
             facing: FacingDirection::Right,
         }
     }
@@ -149,7 +155,10 @@ impl Default for PlatformBundle {
     fn default() -> Self {
         Self {
             marker: Platform,
-            collider: RectCollider(Vec2 { x: PLATFORM_WIDTH, y: PLATFORM_HEIGHT }),
+            collider: RectCollider(Vec2 {
+                x: PLATFORM_WIDTH,
+                y: PLATFORM_HEIGHT,
+            }),
             transform: Transform::default(),
         }
     }
@@ -211,7 +220,7 @@ impl DoodlJumpSettings {
     pub fn min_platform_x(&self) -> f32 {
         -self.game_width / 2.0 + PLATFORM_WIDTH / 2.0
     }
-    
+
     pub fn max_platform_x(&self) -> f32 {
         self.game_width / 2.0 - PLATFORM_WIDTH / 2.0
     }
@@ -242,11 +251,17 @@ pub struct DoodlJumpPlugin {
 
 impl Plugin for DoodlJumpPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .init_resource::<ScrollHeight>()
+        app.init_resource::<ScrollHeight>()
             .insert_resource(self.gravity.clone())
             .insert_resource(self.settings.clone())
-            .insert_resource(RngSource(StdRng::seed_from_u64(self.settings.fixed_rng_seed.unwrap_or_else(|| SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()))))
+            .insert_resource(RngSource(StdRng::seed_from_u64(
+                self.settings.fixed_rng_seed.unwrap_or_else(|| {
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs()
+                }),
+            )))
             .add_systems(Startup, setup_doodl_jump)
             .add_systems(
                 Update,
@@ -258,14 +273,19 @@ impl Plugin for DoodlJumpPlugin {
                         wrap_around_walls,
                         collide_with_platforms,
                         check_death,
-                    ).chain(),
+                    )
+                        .chain(),
                 ),
             );
         // TODO restrict window on render feature
     }
 }
 
-pub fn setup_doodl_jump(mut commands: Commands, mut rng: ResMut<RngSource>, settings: Res<DoodlJumpSettings>,) {
+pub fn setup_doodl_jump(
+    mut commands: Commands,
+    mut rng: ResMut<RngSource>,
+    settings: Res<DoodlJumpSettings>,
+) {
     // player
     commands.spawn((
         PlayerBundle::default(),
@@ -273,7 +293,7 @@ pub fn setup_doodl_jump(mut commands: Commands, mut rng: ResMut<RngSource>, sett
     ));
 
     // TODO spawn camera on render feature
-    
+
     let top = settings.max_initial_platform_y();
     let bottom = settings.min_initial_platform_y();
     let left = settings.min_platform_x();
@@ -353,14 +373,23 @@ pub fn check_death(
     }
 }
 
-pub fn apply_gravity(mut velocities: Query<&mut Velocity>, settings: Res<DoodlJumpSettings>, gravity: Res<Gravity>, time: Res<Time>) {
+pub fn apply_gravity(
+    mut velocities: Query<&mut Velocity>,
+    settings: Res<DoodlJumpSettings>,
+    gravity: Res<Gravity>,
+    time: Res<Time>,
+) {
     let dt = settings.dt(&time);
     for mut velocity in velocities.iter_mut() {
         velocity.0 += gravity.0 * dt;
     }
 }
 
-pub fn apply_velocity(mut transforms: Query<(&mut Transform, &Velocity)>, settings: Res<DoodlJumpSettings>, time: Res<Time>) {
+pub fn apply_velocity(
+    mut transforms: Query<(&mut Transform, &Velocity)>,
+    settings: Res<DoodlJumpSettings>,
+    time: Res<Time>,
+) {
     let dt = settings.dt(&time);
     for (mut transform, velocity) in transforms.iter_mut() {
         transform.translation += (velocity.0 * dt).extend(0.0);
@@ -395,7 +424,8 @@ pub fn collide_with_platforms(
     platforms_q: Query<(&Transform, &RectCollider), With<Platform>>,
     settings: Res<DoodlJumpSettings>,
 ) {
-    let (mut player_transform, mut player_velocity, player_collider) = player_q.single_mut().unwrap();
+    let (mut player_transform, mut player_velocity, player_collider) =
+        player_q.single_mut().unwrap();
     if player_velocity.0.y >= 0.0 {
         // only collide with platforms when falling
         return;
@@ -407,9 +437,14 @@ pub fn collide_with_platforms(
             continue;
         }
 
-        if platform_collider.is_colliding(platform_transform.translation.xy(), player_collider, player_transform.translation.xy()) {
+        if platform_collider.is_colliding(
+            platform_transform.translation.xy(),
+            player_collider,
+            player_transform.translation.xy(),
+        ) {
             // player is colliding, moving downward, and above the center, so we should jump.
-            player_transform.translation.y = platform_transform.translation.y + platform_collider.0.y / 2.0;
+            player_transform.translation.y =
+                platform_transform.translation.y + platform_collider.0.y / 2.0;
             player_velocity.0.y = settings.player_jump_speed;
 
             // pass jump event for audio and such

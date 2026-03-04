@@ -18,16 +18,12 @@ impl Assets {
         cfg: &crate::config::Config,
         thread_pool: stp::ThreadPool,
     ) -> Self {
-
         Self {
             texture_storage: texture::Storage::new(thread_pool.clone()),
         }
     }
 
-    pub fn update(
-        &mut self,
-        ctx: &mut ggez::Context,
-    ) {
+    pub fn update(&mut self, ctx: &mut ggez::Context) {
         self.texture_storage.update(ctx);
     }
 }

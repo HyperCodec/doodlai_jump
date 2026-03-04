@@ -1,6 +1,6 @@
+use super::TextureId;
 use serde::{Deserialize, Serialize};
 use time::DTDelay;
-use super::TextureId;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum ImageType {

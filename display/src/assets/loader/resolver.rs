@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::assets::file::Path;
+use std::collections::HashMap;
 
 type ResolverMap = HashMap<crate::assets::AssetId, Path>;
 

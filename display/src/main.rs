@@ -175,12 +175,8 @@ impl ggez::event::EventHandler for Display {
 
         let render_request = self.renderer.render_request();
 
-        self.frame_stats.draw(
-            math::Point::ZERO,
-            ctx,
-            render_request,
-            &self.threadpool
-        )?;
+        self.frame_stats
+            .draw(math::Point::ZERO, ctx, render_request, &self.threadpool)?;
 
         self.gui_menu.draw(ctx, render_request)?;
 
@@ -211,7 +207,7 @@ impl ggez::event::EventHandler for Display {
         let render_log = self.renderer.run(
             ctx,
             self.gui_menu.backend_mut(),
-            &mut self.asset_mgr.texture_storage
+            &mut self.asset_mgr.texture_storage,
         )?;
 
         self.frame_stats.set_render_log(render_log);

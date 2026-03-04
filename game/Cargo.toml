@@ -9,5 +9,5 @@ default = []
 render = ["bevy/2d"]
 
 [dependencies]
-bevy = { version = "0.18.0", default-features = false, features = ["multi_threaded", "keyboard"] }
+bevy.workspace = true
 rand = "0.10.0"
