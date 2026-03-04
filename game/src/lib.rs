@@ -5,8 +5,12 @@ const PLAYER_TOP_MARGIN: f32 = 10.0;
 const PLAYER_HORIZ_SPEED: f32 = 1.0;
 const PLAYER_JUMP_SPEED: f32 = 3.0;
 const FIXED_DT: Option<f32> = None;
+const FIXED_RNG_SEED: Option<u64> = None;
+
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use bevy::prelude::*;
+use rand::{SeedableRng, rngs::StdRng};
 
 #[derive(Component, Debug, Default)]
 pub struct Player;
@@ -157,6 +161,7 @@ pub struct DoodlJumpSettings {
     pub player_horiz_speed: f32,
     pub player_jump_speed: f32,
     pub fixed_dt: Option<f32>,
+    pub fixed_rng_seed: Option<u64>,
 }
 
 impl Default for DoodlJumpSettings {
@@ -169,15 +174,19 @@ impl Default for DoodlJumpSettings {
             player_horiz_speed: PLAYER_HORIZ_SPEED,
             player_jump_speed: PLAYER_JUMP_SPEED,
             fixed_dt: FIXED_DT,
+            fixed_rng_seed: FIXED_RNG_SEED,
         }
     }
 }
 
 impl DoodlJumpSettings {
-    pub fn dt(&self, time: Res<Time>) -> f32 {
+    pub fn dt(&self, time: &Time) -> f32 {
         self.fixed_dt.unwrap_or_else(|| time.delta_secs())
     }
 }
+
+#[derive(Resource, Debug)]
+pub struct RngSource(pub StdRng);
 
 #[derive(Default, Debug)]
 pub struct DoodlJumpPlugin {
@@ -191,6 +200,7 @@ impl Plugin for DoodlJumpPlugin {
             .init_resource::<ScrollHeight>()
             .insert_resource(self.gravity.clone())
             .insert_resource(self.settings.clone())
+            .insert_resource(RngSource(StdRng::seed_from_u64(self.settings.fixed_rng_seed.unwrap_or_else(|| SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()))))
             .add_systems(Startup, setup_doodl_jump)
             .add_systems(
                 Update,
@@ -267,15 +277,15 @@ pub fn check_death(
     }
 }
 
-pub fn apply_gravity(mut velocities: Query<&mut Velocity>, gravity: Res<Gravity>, time: Res<Time>) {
-    let dt = time.delta_secs();
+pub fn apply_gravity(mut velocities: Query<&mut Velocity>, settings: Res<DoodlJumpSettings>, gravity: Res<Gravity>, time: Res<Time>) {
+    let dt = settings.dt(&time);
     for mut velocity in velocities.iter_mut() {
         velocity.0 += gravity.0 * dt;
     }
 }
 
-pub fn apply_velocity(mut transforms: Query<(&mut Transform, &Velocity)>, time: Res<Time>) {
-    let dt = time.delta_secs();
+pub fn apply_velocity(mut transforms: Query<(&mut Transform, &Velocity)>, settings: Res<DoodlJumpSettings>, time: Res<Time>) {
+    let dt = settings.dt(&time);
     for (mut transform, velocity) in transforms.iter_mut() {
         transform.translation += (velocity.0 * dt).extend(0.0);
     }
@@ -290,7 +300,7 @@ pub fn handle_inputs(
     mut transform: Query<(&mut Transform, &mut FacingDirection), With<Player>>,
 ) {
     let (mut player_transform, mut player_facing) = transform.single_mut().unwrap();
-    let dt = time.delta_secs();
+    let dt = settings.dt(&time);
 
     if event.pressed(KeyCode::ArrowRight) {
         player_transform.translation.x += settings.player_horiz_speed * dt;
