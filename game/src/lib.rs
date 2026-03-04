@@ -1,4 +1,4 @@
-const PLATFORM_COUNT: u32 = 5;
+const NUM_PLATFORMS: u32 = 5;
 const GAME_WIDTH: f32 = 540.;
 const GAME_HEIGHT: f32 = 960.;
 const PLAYER_TOP_MARGIN: f32 = 10.0;
@@ -7,10 +7,16 @@ const PLAYER_JUMP_SPEED: f32 = 3.0;
 const FIXED_DT: Option<f32> = None;
 const FIXED_RNG_SEED: Option<u64> = None;
 
-use std::time::{SystemTime, UNIX_EPOCH};
+const PLAYER_WIDTH: f32 = 0.5;
+const PLAYER_HEIGHT: f32 = 1.0;
+
+const PLATFORM_WIDTH: f32 = 1.0;
+const PLATFORM_HEIGHT: f32 = 0.5;
+
+use std::{ops::{Deref, DerefMut}, time::{SystemTime, UNIX_EPOCH}};
 
 use bevy::prelude::*;
-use rand::{SeedableRng, rngs::StdRng};
+use rand::prelude::*;
 
 #[derive(Component, Debug, Default)]
 pub struct Player;
@@ -108,7 +114,7 @@ impl Default for PlayerBundle {
             marker: Player::default(),
             velocity: Velocity::default(),
             transform: Transform::default(),
-            collider: RectCollider(Vec2 { x: 0.5, y: 1.0 }),
+            collider: RectCollider(Vec2 { x: PLAYER_WIDTH, y: PLAYER_HEIGHT }),
             facing: FacingDirection::Right,
         }
     }
@@ -120,7 +126,7 @@ pub struct ScrollHeight(pub f32);
 impl Default for ScrollHeight {
     fn default() -> Self {
         // assuming player at center
-        Self(PLAYER_TOP_MARGIN + 0.5)
+        Self(PLAYER_TOP_MARGIN + PLAYER_HEIGHT / 2.0)
     }
 }
 
@@ -143,7 +149,7 @@ impl Default for PlatformBundle {
     fn default() -> Self {
         Self {
             marker: Platform,
-            collider: RectCollider(Vec2 { x: 0.5, y: 1.0 }),
+            collider: RectCollider(Vec2 { x: PLATFORM_WIDTH, y: PLATFORM_HEIGHT }),
             transform: Transform::default(),
         }
     }
@@ -162,12 +168,13 @@ pub struct DoodlJumpSettings {
     pub player_jump_speed: f32,
     pub fixed_dt: Option<f32>,
     pub fixed_rng_seed: Option<u64>,
+    pub num_platforms: u32,
 }
 
 impl Default for DoodlJumpSettings {
     fn default() -> Self {
         Self {
-            platform_count: PLATFORM_COUNT,
+            platform_count: NUM_PLATFORMS,
             game_width: GAME_WIDTH,
             game_height: GAME_HEIGHT,
             player_top_margin: PLAYER_TOP_MARGIN,
@@ -175,6 +182,7 @@ impl Default for DoodlJumpSettings {
             player_jump_speed: PLAYER_JUMP_SPEED,
             fixed_dt: FIXED_DT,
             fixed_rng_seed: FIXED_RNG_SEED,
+            num_platforms: NUM_PLATFORMS,
         }
     }
 }
@@ -183,10 +191,48 @@ impl DoodlJumpSettings {
     pub fn dt(&self, time: &Time) -> f32 {
         self.fixed_dt.unwrap_or_else(|| time.delta_secs())
     }
+
+    pub fn non_platform_space(&self) -> f32 {
+        self.game_height - (self.num_platforms as f32 * PLATFORM_HEIGHT)
+    }
+
+    pub fn space_between_platforms(&self) -> f32 {
+        self.non_platform_space() / self.num_platforms as f32
+    }
+
+    pub fn max_initial_platform_y(&self) -> f32 {
+        self.game_height / 2.0 - PLATFORM_HEIGHT / 2.0 - self.space_between_platforms() / 2.0
+    }
+
+    pub fn min_initial_platform_y(&self) -> f32 {
+        -self.game_height / 2.0 + PLATFORM_HEIGHT / 2.0 + self.space_between_platforms() / 2.0
+    }
+
+    pub fn min_platform_x(&self) -> f32 {
+        -self.game_width / 2.0 + PLATFORM_WIDTH / 2.0
+    }
+    
+    pub fn max_platform_x(&self) -> f32 {
+        self.game_width / 2.0 - PLATFORM_WIDTH / 2.0
+    }
 }
 
 #[derive(Resource, Debug)]
 pub struct RngSource(pub StdRng);
+
+impl Deref for RngSource {
+    type Target = StdRng;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for RngSource {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 #[derive(Default, Debug)]
 pub struct DoodlJumpPlugin {
@@ -219,7 +265,7 @@ impl Plugin for DoodlJumpPlugin {
     }
 }
 
-pub fn setup_doodl_jump(mut commands: Commands) {
+pub fn setup_doodl_jump(mut commands: Commands, mut rng: ResMut<RngSource>, settings: Res<DoodlJumpSettings>,) {
     // player
     commands.spawn((
         PlayerBundle::default(),
@@ -227,13 +273,33 @@ pub fn setup_doodl_jump(mut commands: Commands) {
     ));
 
     // TODO spawn camera on render feature
-    // TODO spawn initial platforms
+    
+    let top = settings.max_initial_platform_y();
+    let bottom = settings.min_initial_platform_y();
+    let left = settings.min_platform_x();
+    let right = settings.max_platform_x();
+
+    let step = (top - bottom) / settings.num_platforms as f32;
+
+    for i in 0..5 {
+        let y = top - i as f32 * step;
+        let x = rng.random_range(left..right);
+
+        commands.spawn((
+            PlatformBundle {
+                transform: Transform::from_xyz(x, y, 0.0),
+                ..default()
+            },
+            // TODO SpriteBundle on render feature
+        ));
+    }
 }
 
 pub fn update_scroll(
     player_q: Query<(&Transform, &RectCollider), With<Player>>,
     platforms_q: Query<(Entity, &Transform, &RectCollider), With<Platform>>,
     settings: Res<DoodlJumpSettings>,
+    mut rng: ResMut<RngSource>,
     mut commands: Commands,
     mut scroll: ResMut<ScrollHeight>,
 ) {
@@ -250,12 +316,22 @@ pub fn update_scroll(
                 // off bottom of screen, despawn
                 commands.entity(platform).despawn();
 
-                // TODO spawn new random platform to replace it and keep
-                // the total platforms on screen consistent.
+                let y = settings.max_initial_platform_y();
+                let left = settings.min_platform_x();
+                let right = settings.max_platform_x();
+
+                let x = rng.random_range(left..right);
+                commands.spawn((
+                    PlatformBundle {
+                        transform: Transform::from_xyz(x, y, 0.0),
+                        ..default()
+                    },
+                    // TODO SpriteBundle on render feature
+                ));
             }
         }
 
-        // TODO camera on render feature
+        // TODO move camera on render feature
     }
 }
 
