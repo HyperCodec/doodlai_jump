@@ -1,9 +1,9 @@
 use ai_player::{AIPlayerPlugin, Brain};
-use bevy::prelude::*;
+use bevy::{log::LogPlugin, prelude::*, time::TimePlugin};
 use doodl_jump::{DeathEvent, DoodlJumpPlugin, DoodlJumpSettings, ScrollHeight};
 
 pub const NB_GAMES: usize = 3;
-pub const GAME_STEPS: usize = 50; // max amount of steps we let the ai play the game before registering their scrore
+pub const MAX_STEPS: usize = 50; // max amount of steps we let the ai play the game before registering their scrore
 pub const GAME_FPS: usize = 20; // 60
 pub const GAME_DELTA_TIME: f32 = 1. / GAME_FPS as f32;
 pub const FITNESS_LOSS_PER_TICK: f32 = 0.01; // to encourage the ai to finish the game faster
@@ -30,7 +30,9 @@ pub fn fitness(brain: &Brain) -> f32 {
 
     for _ in 0..NB_GAMES {
         let mut app = App::new();
-        app.add_plugins((game_plugin.clone(), ai_plugin.clone()));
+        app.add_plugins((game_plugin.clone(), ai_plugin.clone(), trainer_plugin, TimePlugin::default(), LogPlugin::default()))
+            .init_resource::<ButtonInput<KeyCode>>();
+        info!("starting game");
         fitness += eval_game_fitness(app);
     }
 
@@ -51,10 +53,11 @@ pub fn eval_game_fitness(mut app: App) -> f32 {
     loop {
         app.update();
 
-        if i == GAME_STEPS || app.should_exit().is_some() {
+        if i == MAX_STEPS || app.should_exit().is_some() {
+            info!("game ended");
             let height = app.world().get_resource::<ScrollHeight>().unwrap().0;
             let time_penalty = if i > GRACE_PERIOD {
-                (GAME_STEPS - i) as f32 * FITNESS_LOSS_PER_TICK
+                (MAX_STEPS - i) as f32 * FITNESS_LOSS_PER_TICK
             } else {
                 0.0
             };

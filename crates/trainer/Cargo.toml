@@ -7,11 +7,10 @@ edition = "2021"
 doodl-jump.workspace = true
 ai-player.workspace = true
 ctrlc = "3.5.2"
-log.workspace = true
-logger.workspace = true
-time.workspace = true
 ron.workspace = true
 neat.workspace = true
 genetic-rs.workspace = true
 genetic-rs-extras = { version = "0.1.1", features = ["indicatif", "plotters"] }
+# bevy = { workspace = true, features = ["debug"] }
 bevy.workspace = true
+plotters = "0.3.7"
